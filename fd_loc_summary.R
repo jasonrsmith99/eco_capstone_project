@@ -23,8 +23,9 @@ fd_loc %>%
   group_by(major) %>% 
   summarise(out_state = sum(out_state)) %>% 
   slice_max(order_by = out_state, n = 10) %>% 
-  rename(`Employer out of State` = out_state) %>% 
-  xtable(caption = "Majors with the most undergraduates employed by out of state firms") %>% 
+  rename(`Employer out of State` = out_state,
+         Major = major) %>% 
+  xtable(caption = "Majors with the most undergraduates employed by out of state firms", digits = 0) %>% 
   print(file = "output/out_state_major.tex")
 
 
