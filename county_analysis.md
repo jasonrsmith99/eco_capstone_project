@@ -118,4 +118,4 @@ results. It may be beneficial to either remove outliers or look only
 within IQR.
 
 The cities may also not have been chosen well to be compared to Kent
-County (which is what we’re really interested in).
+County (which is what we’re really interested in)
