@@ -29,7 +29,7 @@ counties <- counties %>%
   rename(county = state_county)
 ```
 
-summary table :)
+summary table. The data is so skewed right this probably isn't very useful. Maybe do weighted median?
 ```{r}
 counties %>% 
   group_by(county) %>% 
@@ -59,7 +59,7 @@ ANOVA to see if there is a significant difference between the counties
 anova <- aov(incwage ~ county, weights = perwt, data = counties)
 summary(anova)
 ```
-We conclude from the ANOVA that there is a significant difference in earnings between the counties. We can use Tukey to find out which differences specifcally are different.
+We conclude from the ANOVA that there is a significant difference in earnings between the counties. We can use Tukey to find out which differences specifically are different.
 ```{r}
 TukeyHSD(anova)
 
@@ -70,4 +70,8 @@ The significant differences are
 - Summit and Allen
 - Dane and Allen
 - Summit and Kent
+
+Looking closely at the Tukey output, the outliers are really skewing the results. It may be beneficial to either remove outliers or look only within IQR.
+
+The cities may also not have been chosen well to be compared to Kent County (which is what we're really interested in).
 
