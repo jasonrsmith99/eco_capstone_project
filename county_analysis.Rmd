@@ -75,3 +75,40 @@ Looking closely at the Tukey output, the outliers are really skewing the results
 
 The cities may also not have been chosen well to be compared to Kent County (which is what we're really interested in)
 
+
+
+## Two-way anova with county and educ
+
+I have no idea if this is valid or not
+
+```{r}
+county_2 <- counties
+
+county_2 <- county_2 %>% 
+  mutate(highest_deg = case_when(educd < 62 ~ "Less than HS",
+                                 educd < 81 ~ "High School",
+                                 educd < 101 ~ "Associates",
+                                 educd < 114 ~ "Bachelors",
+                                 TRUE ~ "Grad")) #will need to reconsider these blocks
+
+county_2$highest_deg <- factor(county_2$highest_deg)
+
+anova2 <- aov(incwage ~ highest_deg, weights = perwt, data = county_2)
+summary(anova2)
+```
+
+```{r}
+TukeyHSD(anova2)
+```
+All differences are significant except for high school and associates degrees. This may be due to poor model specification.
+
+It may be better yet to do some interaction model
+```{r}
+anova3 <- aov(incwage ~ county * highest_deg, weights = perwt, data = county_2)
+summary(anova3)
+```
+
+```{r}
+TukeyHSD(anova3)
+```
+and I really have no idea where to begin with this output -_-
