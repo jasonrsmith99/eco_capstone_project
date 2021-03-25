@@ -1,0 +1,73 @@
+---
+title: "average wage select counties"
+output: github_document
+---
+
+
+```{r, message=FALSE}
+library(tidyverse)
+```
+
+```{r}
+load(here::here("data", "acs2019.RData"))
+```
+
+joining fips codes into one code so we can use the codes given by fact finder
+```{r}
+counties <- acs2019 %>% 
+  unite("state_county", statefip, countyfip, sep = "", na.rm = TRUE, remove = FALSE)
+```
+
+filtering counties of interest
+```{r}
+counties <- counties %>% 
+  filter(state_county %in% c(2681, 39153, 183, 1743, 5525))
+
+counties$state_county <- factor(counties$state_county, labels = c("Dupage", "Allen", "Kent", "Summit", "Dane"))
+
+counties <- counties %>% 
+  rename(county = state_county)
+```
+
+summary table :)
+```{r}
+counties %>% 
+  group_by(county) %>% 
+  summarize(mean_wage = weighted.mean(incwage, perwt), n = n()) %>% 
+  knitr::kable()
+```
+
+graphing
+```{r}
+#when am I supposed to use weights
+counties %>% 
+  ggplot(aes(x = incwage))+
+  geom_boxplot(aes(weight = perwt, color = county))+
+  labs(x = "Income",
+       color = "County",
+       title = "Income by county",
+       subtitle = "weighted?")+
+  scale_x_continuous(labels = scales::dollar,
+                     expand = expansion(mult = c(.01, .06)))+
+  ggpubr::theme_pubr()+
+  theme(axis.ticks.y = element_blank(),
+        axis.text.y = element_blank())
+```
+
+ANOVA to see if there is a significant difference between the counties
+```{r}
+anova <- aov(incwage ~ county, weights = perwt, data = counties)
+summary(anova)
+```
+We conclude from the ANOVA that there is a significant difference in earnings between the counties. We can use Tukey to find out which differences specifcally are different.
+```{r}
+TukeyHSD(anova)
+
+```
+The significant differences are
+
+- Summit and Dupage
+- Summit and Allen
+- Dane and Allen
+- Summit and Kent
+
