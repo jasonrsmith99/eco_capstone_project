@@ -153,7 +153,7 @@ TukeyHSD(under_anova)
 
 At least with the counties chosen, Grand Rapids doesn't pay significantly less than most of the counties. The counties chosen were intended to be similar to Grand Rapids but there may be value in including larger cities nearby like Detroit or Chicago. It may also be worthwhile to include counties outside of the midwest as difference in pay may be more of a regional thing.
 
-It's also important to note that Dupage County has quite a few more respondents than the other counties. The means are weighted so that shouldn't be a large problem but it's good to note.
+It's also important to note that Dupage County has quite a few more respondents than the other counties. The means are weighted so that shouldn't be a large problem but it's good to note. Also Dupage county is a proxy for Naperville Illnois which is a suburb of Chicago. The fact the wages are higher here isn't super surprising. All these high earners are probably employed in the city.
 
 We should also make age-earnings profiles for the counties to see if there's a difference on age. We could do that with ANOVA but that sounds painful... Maybe with some form of factor (early/mid/late career).
 

@@ -243,7 +243,10 @@ pay may be more of a regional thing.
 
 It’s also important to note that Dupage County has quite a few more
 respondents than the other counties. The means are weighted so that
-shouldn’t be a large problem but it’s good to note.
+shouldn’t be a large problem but it’s good to note. Also Dupage county
+is a proxy for Naperville Illnois which is a suburb of Chicago. The fact
+the wages are higher here isn’t super surprising. All these high earners
+are probably employed in the city.
 
 We should also make age-earnings profiles for the counties to see if
 there’s a difference on age. We could do that with ANOVA but that sounds
