@@ -87,10 +87,10 @@ TukeyHSD(anova)
 ```
 The significant differences are
 
-- Summit and Dupage
-- Summit and Allen
-- Dane and Allen
-- Summit and Kent
+- Summit and Dupage (Dupage pays more)
+- Summit and Allen (Allen pays more)
+- Dane and Allen (Allen pays more)
+- Summit and Kent (Kent plays more)
 
 Looking closely at the Tukey output, the outliers are really skewing the results. It may be beneficial to either remove outliers or look only within IQR.
 

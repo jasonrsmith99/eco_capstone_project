@@ -16,7 +16,3 @@ acs2019 <- acs2019 %>%
 acs2019 %>% 
   group_by(highest_deg) %>% 
   summarize(wage = mean(incwage, na.rm = TRUE))
-
-acs2019 %>% 
-  ggplot(aes(x = age, y = incwage))+
-  geom_line(aes(color = highest_deg))
