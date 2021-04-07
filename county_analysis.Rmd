@@ -30,8 +30,11 @@ counties <- counties %>%
                                  educd < 81 ~ "High School",
                                  educd < 101 ~ "Associates",
                                  educd < 114 ~ "Bachelors",
-                                 TRUE ~ "Grad"),
-         highest_deg = factor(highest_deg)) #will need to reconsider these blocks
+                                 TRUE ~ "Grad"),  #will need to reconsider these blocks
+         highest_deg = factor(highest_deg),
+         incwage = case_when(incwage == 999999 ~ NA_real_,
+                             incwage == 999998 ~ NA_real_,
+                             TRUE ~ incwage))
 
 counties <- counties %>% 
   rename(county = state_county)
@@ -52,7 +55,7 @@ summary table. The data is so skewed right this probably isn't very useful. Mayb
 ```{r}
 counties %>% 
   group_by(county) %>% 
-  summarize(mean_wage = weighted.mean(incwage, perwt), n = n()) %>% 
+  summarize(mean_wage = weighted.mean(incwage, perwt, na.rm = TRUE), n = n()) %>% 
   knitr::kable()
 ```
 
@@ -85,17 +88,17 @@ We conclude from the ANOVA that there is a significant difference in earnings be
 TukeyHSD(anova)
 
 ```
-The significant differences are
+**The significant differences at 5%**
 
-- Summit and Dupage (Dupage pays more)
-- Summit and Allen (Allen pays more)
-- Dane and Allen (Allen pays more)
-- Summit and Kent (Kent plays more)
-
-Looking closely at the Tukey output, the outliers are really skewing the results. It may be beneficial to either remove outliers or look only within IQR.
+- Allen - Dupage (Dupage pays more)
+- Kent - Dupage (Dupage pays more)
+- Summit - Dupage (Dupage pays more)
+- Dane - Dupage (Dupage pays more)
+- Dane - Allen (Dane pays more)
+- Dane - Kent (Dane pays more)
+- Dane - Summit (Dane pays more)
 
 The cities may also not have been chosen well to be compared to Kent County (which is what we're really interested in)
-
 
 
 ## Just looking at people with Bachelors
@@ -103,7 +106,17 @@ The cities may also not have been chosen well to be compared to Kent County (whi
 ```{r}
 undergrad <- counties %>% 
   filter(highest_deg == "Bachelors")
+```
 
+```{r}
+undergrad %>% 
+  group_by(county) %>% 
+  summarize(mean_wage = weighted.mean(incwage, perwt, na.rm = TRUE), n = n()) %>% 
+  knitr::kable()
+```
+
+
+```{r}
 undergrad %>% 
   ggplot(aes(x = incwage))+
   geom_boxplot(aes(weight = perwt, color = county))+
@@ -129,15 +142,18 @@ significant difference between counties tukey to do pair-wise
 ```{r}
 TukeyHSD(under_anova)
 ```
-Significant at 5%
 
-- Allen Dupage (dupage pays more)
-- Kent Dupage (dupage pays more)
-- Dane Dupage (dupage pays more)
+**Significant differences at 5%**
+
+- Allen - Dupage (Dupage pays more)
+- Kent - Dupage (Dupage pays more)
+- Dane Dupage (Dupage pays more)
 
 ## Conclusion
 
 At least with the counties chosen, Grand Rapids doesn't pay significantly less than most of the counties. The counties chosen were intended to be similar to Grand Rapids but there may be value in including larger cities nearby like Detroit or Chicago. It may also be worthwhile to include counties outside of the midwest as difference in pay may be more of a regional thing.
+
+It's also important to note that Dupage County has quite a few more respondents than the other counties. The means are weighted so that shouldn't be a large problem but it's good to note.
 
 We should also make age-earnings profiles for the counties to see if there's a difference on age. We could do that with ANOVA but that sounds painful... Maybe with some form of factor (early/mid/late career).
 

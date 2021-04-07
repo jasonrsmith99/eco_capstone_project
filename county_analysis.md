@@ -30,8 +30,11 @@ counties <- counties %>%
                                  educd < 81 ~ "High School",
                                  educd < 101 ~ "Associates",
                                  educd < 114 ~ "Bachelors",
-                                 TRUE ~ "Grad"),
-         highest_deg = factor(highest_deg)) #will need to reconsider these blocks
+                                 TRUE ~ "Grad"),  #will need to reconsider these blocks
+         highest_deg = factor(highest_deg),
+         incwage = case_when(incwage == 999999 ~ NA_real_,
+                             incwage == 999998 ~ NA_real_,
+                             TRUE ~ incwage))
 
 counties <- counties %>% 
   rename(county = state_county)
@@ -53,17 +56,17 @@ useful. Maybe do weighted median?
 ``` r
 counties %>% 
   group_by(county) %>% 
-  summarize(mean_wage = weighted.mean(incwage, perwt), n = n()) %>% 
+  summarize(mean_wage = weighted.mean(incwage, perwt, na.rm = TRUE), n = n()) %>% 
   knitr::kable()
 ```
 
 | county | mean\_wage |    n |
 |:-------|-----------:|-----:|
-| Dupage |   235086.1 | 9374 |
-| Allen  |   248912.1 | 3872 |
-| Kent   |   238468.4 | 4465 |
-| Summit |   208130.9 | 4875 |
-| Dane   |   216662.9 | 3792 |
+| Dupage |   45681.55 | 9374 |
+| Allen  |   29314.59 | 3872 |
+| Kent   |   32517.88 | 4465 |
+| Summit |   31972.94 | 4875 |
+| Dane   |   40938.63 | 3792 |
 
 graphing
 
@@ -83,6 +86,8 @@ counties %>%
         axis.text.y = element_blank())
 ```
 
+    ## Warning: Removed 4769 rows containing non-finite values (stat_boxplot).
+
 ![](county_analysis_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ANOVA to see if there is a significant difference between the counties
@@ -97,11 +102,12 @@ anova <- aov(incwage ~ county, weights = perwt, data = counties)
 summary(anova)
 ```
 
-    ##                Df    Sum Sq   Mean Sq F value   Pr(>F)    
-    ## county          4 5.612e+14 1.403e+14   8.064 1.71e-06 ***
-    ## Residuals   26373 4.588e+17 1.740e+13                     
+    ##                Df    Sum Sq   Mean Sq F value Pr(>F)    
+    ## county          4 1.008e+14 2.520e+13   60.74 <2e-16 ***
+    ## Residuals   21604 8.962e+15 4.148e+11                   
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 4769 observations deleted due to missingness
 
 We conclude from the ANOVA that there is a significant difference in
 earnings between the counties. We can use Tukey to find out which
@@ -118,28 +124,27 @@ TukeyHSD(anova)
     ## Fit: aov(formula = incwage ~ county, data = counties, weights = perwt)
     ## 
     ## $county
-    ##                     diff        lwr         upr     p adj
-    ## Allen-Dupage   13826.000  -5706.258  33358.2566 0.3008243
-    ## Kent-Dupage     3382.259 -15209.451  21973.9702 0.9877394
-    ## Summit-Dupage -26955.181 -45009.562  -8900.7995 0.0004468
-    ## Dane-Dupage   -18423.209 -38100.734   1254.3172 0.0791484
-    ## Kent-Allen    -10443.740 -32896.343  12008.8630 0.7104439
-    ## Summit-Allen  -40781.181 -62790.914 -18771.4470 0.0000043
-    ## Dane-Allen    -32249.208 -55608.846  -8889.5698 0.0015587
-    ## Summit-Kent   -30337.440 -51516.935  -9157.9454 0.0008869
-    ## Dane-Kent     -21805.468 -44384.559    773.6228 0.0642933
-    ## Dane-Summit     8531.972 -13606.779  30670.7240 0.8313053
+    ##                      diff        lwr        upr     p adj
+    ## Allen-Dupage  -16366.9641 -20080.153 -12653.775 0.0000000
+    ## Kent-Dupage   -13163.6714 -16687.343  -9640.000 0.0000000
+    ## Summit-Dupage -13708.6050 -17088.649 -10328.561 0.0000000
+    ## Dane-Dupage    -4742.9233  -8427.247  -1058.600 0.0040751
+    ## Kent-Allen      3203.2927  -1068.558   7475.143 0.2442808
+    ## Summit-Allen    2658.3591  -1495.813   6812.531 0.4058392
+    ## Dane-Allen     11624.0408   7218.739  16029.343 0.0000000
+    ## Summit-Kent     -544.9335  -4530.613   3440.745 0.9958893
+    ## Dane-Kent       8420.7482   4173.964  12667.532 0.0000005
+    ## Dane-Summit     8965.6817   4837.290  13094.073 0.0000000
 
-The significant differences are
+**The significant differences at 5%**
 
--   Summit and Dupage (Dupage pays more)
--   Summit and Allen (Allen pays more)
--   Dane and Allen (Allen pays more)
--   Summit and Kent (Kent plays more)
-
-Looking closely at the Tukey output, the outliers are really skewing the
-results. It may be beneficial to either remove outliers or look only
-within IQR.
+-   Allen - Dupage (Dupage pays more)
+-   Kent - Dupage (Dupage pays more)
+-   Summit - Dupage (Dupage pays more)
+-   Dane - Dupage (Dupage pays more)
+-   Dane - Allen (Dane pays more)
+-   Dane - Kent (Dane pays more)
+-   Dane - Summit (Dane pays more)
 
 The cities may also not have been chosen well to be compared to Kent
 County (which is what we’re really interested in)
@@ -149,7 +154,24 @@ County (which is what we’re really interested in)
 ``` r
 undergrad <- counties %>% 
   filter(highest_deg == "Bachelors")
+```
 
+``` r
+undergrad %>% 
+  group_by(county) %>% 
+  summarize(mean_wage = weighted.mean(incwage, perwt, na.rm = TRUE), n = n()) %>% 
+  knitr::kable()
+```
+
+| county | mean\_wage |    n |
+|:-------|-----------:|-----:|
+| Dupage |   58363.92 | 2280 |
+| Allen  |   46219.66 |  562 |
+| Kent   |   48795.92 |  805 |
+| Summit |   53221.90 |  861 |
+| Dane   |   49225.89 |  894 |
+
+``` r
 undergrad %>% 
   ggplot(aes(x = incwage))+
   geom_boxplot(aes(weight = perwt, color = county))+
@@ -164,7 +186,7 @@ undergrad %>%
         axis.text.y = element_blank())
 ```
 
-![](county_analysis_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](county_analysis_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 Normality and variance assumptions likely violated. KW or Welch anova
 may be best. but I’ll continue with ANOVA for now.
@@ -204,11 +226,11 @@ TukeyHSD(under_anova)
     ## Dane-Kent        429.9678  -9128.497  9988.432 0.9999489
     ## Dane-Summit    -3996.0075 -13389.484  5397.469 0.7737387
 
-Significant at 5%
+**Significant differences at 5%**
 
--   Allen Dupage (dupage pays more)
--   Kent Dupage (dupage pays more)
--   Dane Dupage (dupage pays more)
+-   Allen - Dupage (Dupage pays more)
+-   Kent - Dupage (Dupage pays more)
+-   Dane Dupage (Dupage pays more)
 
 ## Conclusion
 
@@ -218,6 +240,10 @@ intended to be similar to Grand Rapids but there may be value in
 including larger cities nearby like Detroit or Chicago. It may also be
 worthwhile to include counties outside of the midwest as difference in
 pay may be more of a regional thing.
+
+It’s also important to note that Dupage County has quite a few more
+respondents than the other counties. The means are weighted so that
+shouldn’t be a large problem but it’s good to note.
 
 We should also make age-earnings profiles for the counties to see if
 there’s a difference on age. We could do that with ANOVA but that sounds
