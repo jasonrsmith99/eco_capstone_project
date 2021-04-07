@@ -26,8 +26,27 @@ counties <- counties %>%
 counties$state_county <- factor(counties$state_county, labels = c("Dupage", "Allen", "Kent", "Summit", "Dane"))
 
 counties <- counties %>% 
+  mutate(highest_deg = case_when(educd < 62 ~ "Less than HS",
+                                 educd < 81 ~ "High School",
+                                 educd < 101 ~ "Associates",
+                                 educd < 114 ~ "Bachelors",
+                                 TRUE ~ "Grad"),
+         highest_deg = factor(highest_deg)) #will need to reconsider these blocks
+
+counties <- counties %>% 
   rename(county = state_county)
 ```
+
+As a reminder, table below shows what city a county is a proxy for
+
+|County Proxy|City|
+|------------|----|
+|Dupage      |Naperville, IL|
+|Allen       |Fort Wayne, IN|
+|Kent        |Grand Rapids, MI|
+|Summit      |Akron, OH|
+|Dane        |Madison, WI|
+
 
 summary table. The data is so skewed right this probably isn't very useful. Maybe do weighted median?
 ```{r}
@@ -55,11 +74,13 @@ counties %>%
 ```
 
 ANOVA to see if there is a significant difference between the counties
+Normality condition technically violated but we can maybe rely on CLT? Could also remove outliers or focus on IQR. Or use KW test.
+There are also unequal variances, unsure if largest variance is more than 4 times the smallest. Regardless, Welch's Anova from Rstatix may be the way to go.
 ```{r}
 anova <- aov(incwage ~ county, weights = perwt, data = counties)
 summary(anova)
 ```
-We conclude from the ANOVA that there is a significant difference in earnings between the counties. We can use Tukey to find out which differences specifically are different.
+We conclude from the ANOVA that there is a significant difference in earnings between the counties. We can use Tukey to find out which differences specifically are different. (Could use Bonferroni to be more conservative)
 ```{r}
 TukeyHSD(anova)
 
@@ -77,38 +98,47 @@ The cities may also not have been chosen well to be compared to Kent County (whi
 
 
 
-## Two-way anova with county and educ
-
-I have no idea if this is valid or not
+## Just looking at people with Bachelors
 
 ```{r}
-county_2 <- counties
+undergrad <- counties %>% 
+  filter(highest_deg == "Bachelors")
 
-county_2 <- county_2 %>% 
-  mutate(highest_deg = case_when(educd < 62 ~ "Less than HS",
-                                 educd < 81 ~ "High School",
-                                 educd < 101 ~ "Associates",
-                                 educd < 114 ~ "Bachelors",
-                                 TRUE ~ "Grad")) #will need to reconsider these blocks
-
-county_2$highest_deg <- factor(county_2$highest_deg)
-
-anova2 <- aov(incwage ~ highest_deg, weights = perwt, data = county_2)
-summary(anova2)
+undergrad %>% 
+  ggplot(aes(x = incwage))+
+  geom_boxplot(aes(weight = perwt, color = county))+
+  labs(x = "Income",
+       color = "County",
+       title = "Income by county",
+       subtitle = "weighted? Bachelor's degree only")+
+  scale_x_continuous(labels = scales::dollar,
+                     expand = expansion(mult = c(.01, .06)))+
+  ggpubr::theme_pubr()+
+  theme(axis.ticks.y = element_blank(),
+        axis.text.y = element_blank())
 ```
+
+Normality and variance assumptions likely violated. KW or Welch anova may be best. but I'll continue with ANOVA for now.
 
 ```{r}
-TukeyHSD(anova2)
+under_anova <- aov(incwage ~ county, weights = perwt, data = undergrad)
+summary(under_anova)
 ```
-All differences are significant except for high school and associates degrees. This may be due to poor model specification.
-
-It may be better yet to do some interaction model
-```{r}
-anova3 <- aov(incwage ~ county * highest_deg, weights = perwt, data = county_2)
-summary(anova3)
-```
+significant difference between counties tukey to do pair-wise
 
 ```{r}
-TukeyHSD(anova3)
+TukeyHSD(under_anova)
 ```
-and I really have no idea where to begin with this output -_-
+Significant at 5%
+
+- Allen Dupage (dupage pays more)
+- Kent Dupage (dupage pays more)
+- Dane Dupage (dupage pays more)
+
+## Conclusion
+
+At least with the counties chosen, Grand Rapids doesn't pay significantly less than most of the counties. The counties chosen were intended to be similar to Grand Rapids but there may be value in including larger cities nearby like Detroit or Chicago. It may also be worthwhile to include counties outside of the midwest as difference in pay may be more of a regional thing.
+
+We should also make age-earnings profiles for the counties to see if there's a difference on age. We could do that with ANOVA but that sounds painful... Maybe with some form of factor (early/mid/late career).
+
+We'll also want to break it down by majors
