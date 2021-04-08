@@ -1,5 +1,5 @@
+library(tidyverse)
 load(here::here("data", "acs2019.RData"))
-library(dplyr)
 
 acs2019 <- acs2019 %>%
   mutate(highest_deg = case_when(educd < 62 ~ "Less than HS",
