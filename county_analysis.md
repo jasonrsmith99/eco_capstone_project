@@ -3,6 +3,7 @@ average wage select counties
 
 ``` r
 library(tidyverse)
+library(rstatix)
 ```
 
 ``` r
@@ -90,51 +91,41 @@ counties %>%
 
 ![](county_analysis_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
-ANOVA to see if there is a significant difference between the counties
-Normality condition technically violated but we can maybe rely on CLT?
-Could also remove outliers or focus on IQR. Or use KW test. There are
-also unequal variances, unsure if largest variance is more than 4 times
-the smallest. Regardless, Welch’s Anova from Rstatix may be the way to
-go.
+We’ll preform Welch’s ANOVA to determine if there is a difference in
+wages between the counties. We use Welch’s to control for
+hetroskedasticity. We’ll assume normality comes from the Central Limits
+Theorem.
 
 ``` r
-anova <- aov(incwage ~ county, weights = perwt, data = counties)
-summary(anova)
+welch_anova_test(counties, incwage ~ county)
 ```
 
-    ##                Df    Sum Sq   Mean Sq F value Pr(>F)    
-    ## county          4 1.008e+14 2.520e+13   60.74 <2e-16 ***
-    ## Residuals   21604 8.962e+15 4.148e+11                   
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 4769 observations deleted due to missingness
+    ## # A tibble: 1 x 7
+    ##   .y.         n statistic   DFn   DFd        p method     
+    ## * <chr>   <int>     <dbl> <dbl> <dbl>    <dbl> <chr>      
+    ## 1 incwage 26378      77.6     4 9654. 6.33e-65 Welch ANOVA
 
-We conclude from the ANOVA that there is a significant difference in
-earnings between the counties. We can use Tukey to find out which
-differences specifically are different. (Could use Bonferroni to be more
-conservative)
+We conclude that there is a significant difference in earnings between
+the counties. We can use Games Howell to see which counties have a
+difference
 
 ``` r
-TukeyHSD(anova)
+games_howell_test(counties, incwage~county) #output is group2 - group 1
 ```
 
-    ##   Tukey multiple comparisons of means
-    ##     95% family-wise confidence level
-    ## 
-    ## Fit: aov(formula = incwage ~ county, data = counties, weights = perwt)
-    ## 
-    ## $county
-    ##                      diff        lwr        upr     p adj
-    ## Allen-Dupage  -16366.9641 -20080.153 -12653.775 0.0000000
-    ## Kent-Dupage   -13163.6714 -16687.343  -9640.000 0.0000000
-    ## Summit-Dupage -13708.6050 -17088.649 -10328.561 0.0000000
-    ## Dane-Dupage    -4742.9233  -8427.247  -1058.600 0.0040751
-    ## Kent-Allen      3203.2927  -1068.558   7475.143 0.2442808
-    ## Summit-Allen    2658.3591  -1495.813   6812.531 0.4058392
-    ## Dane-Allen     11624.0408   7218.739  16029.343 0.0000000
-    ## Summit-Kent     -544.9335  -4530.613   3440.745 0.9958893
-    ## Dane-Kent       8420.7482   4173.964  12667.532 0.0000005
-    ## Dane-Summit     8965.6817   4837.290  13094.073 0.0000000
+    ## # A tibble: 10 x 8
+    ##    .y.     group1 group2 estimate conf.low conf.high         p.adj p.adj.signif
+    ##  * <chr>   <chr>  <chr>     <dbl>    <dbl>     <dbl>         <dbl> <chr>       
+    ##  1 incwage Dupage Allen   -19453.  -22756.   -16151. 0             ****        
+    ##  2 incwage Dupage Kent    -16766.  -20129.   -13403. 0             ****        
+    ##  3 incwage Dupage Summit  -14386.  -17888.   -10885. 0             ****        
+    ##  4 incwage Dupage Dane     -8589.  -12401.    -4777. 0.00000000828 ****        
+    ##  5 incwage Allen  Kent      2687.    -521.     5895. 0.15          ns          
+    ##  6 incwage Allen  Summit    5067.    1714.     8419. 0.000363      ***         
+    ##  7 incwage Allen  Dane     10864.    7188.    14540. 0             ****        
+    ##  8 incwage Kent   Summit    2379.   -1033.     5791. 0.316         ns          
+    ##  9 incwage Kent   Dane      8177.    4447.    11907. 0.0000000234  ****        
+    ## 10 incwage Summit Dane      5798.    1942.     9653. 0.000397      ***
 
 **The significant differences at 5%**
 
@@ -142,6 +133,7 @@ TukeyHSD(anova)
 -   Kent - Dupage (Dupage pays more)
 -   Summit - Dupage (Dupage pays more)
 -   Dane - Dupage (Dupage pays more)
+-   Summit - Allen (Summit pays more)
 -   Dane - Allen (Dane pays more)
 -   Dane - Kent (Dane pays more)
 -   Dane - Summit (Dane pays more)
@@ -192,45 +184,41 @@ Normality and variance assumptions likely violated. KW or Welch anova
 may be best. but I’ll continue with ANOVA for now.
 
 ``` r
-under_anova <- aov(incwage ~ county, weights = perwt, data = undergrad)
-summary(under_anova)
+welch_anova_test(undergrad, incwage ~ county)
 ```
 
-    ##               Df    Sum Sq   Mean Sq F value   Pr(>F)    
-    ## county         4 1.258e+13 3.146e+12    6.03 7.73e-05 ***
-    ## Residuals   5397 2.815e+15 5.217e+11                     
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## # A tibble: 1 x 7
+    ##   .y.         n statistic   DFn   DFd             p method     
+    ## * <chr>   <int>     <dbl> <dbl> <dbl>         <dbl> <chr>      
+    ## 1 incwage  5402      12.0     4 2087. 0.00000000133 Welch ANOVA
 
 significant difference between counties tukey to do pair-wise
 
 ``` r
-TukeyHSD(under_anova)
+games_howell_test(undergrad, incwage ~ county)
 ```
 
-    ##   Tukey multiple comparisons of means
-    ##     95% family-wise confidence level
-    ## 
-    ## Fit: aov(formula = incwage ~ county, data = undergrad, weights = perwt)
-    ## 
-    ## $county
-    ##                      diff        lwr       upr     p adj
-    ## Allen-Dupage  -12144.2674 -21409.037 -2879.498 0.0032301
-    ## Kent-Dupage    -9568.0006 -17633.298 -1502.704 0.0106629
-    ## Summit-Dupage  -5142.0253 -13011.090  2727.039 0.3835533
-    ## Dane-Dupage    -9138.0329 -16900.959 -1375.107 0.0115861
-    ## Kent-Allen      2576.2667  -8237.483 13390.016 0.9666693
-    ## Summit-Allen    7002.2420  -3665.951 17670.435 0.3788557
-    ## Dane-Allen      3006.2345  -7583.911 13596.380 0.9379639
-    ## Summit-Kent     4425.9753  -5218.889 14070.840 0.7205417
-    ## Dane-Kent        429.9678  -9128.497  9988.432 0.9999489
-    ## Dane-Summit    -3996.0075 -13389.484  5397.469 0.7737387
+    ## # A tibble: 10 x 8
+    ##    .y.     group1 group2 estimate conf.low conf.high       p.adj p.adj.signif
+    ##  * <chr>   <chr>  <chr>     <dbl>    <dbl>     <dbl>       <dbl> <chr>       
+    ##  1 incwage Dupage Allen   -15552.  -23547.    -7556. 0.00000127  ****        
+    ##  2 incwage Dupage Kent    -15057.  -22385.    -7729. 0.000000229 ****        
+    ##  3 incwage Dupage Summit   -5103.  -13700.     3495. 0.484       ns          
+    ##  4 incwage Dupage Dane    -11862.  -18769.    -4955. 0.0000287   ****        
+    ##  5 incwage Allen  Kent       495.   -8004.     8993. 1           ns          
+    ##  6 incwage Allen  Summit   10449.     836.    20062. 0.025       *           
+    ##  7 incwage Allen  Dane      3690.   -4450.    11829. 0.729       ns          
+    ##  8 incwage Kent   Summit    9954.     887.    19021. 0.023       *           
+    ##  9 incwage Kent   Dane      3195.   -4291.    10680. 0.771       ns          
+    ## 10 incwage Summit Dane     -6760.  -15491.     1972. 0.214       ns
 
 **Significant differences at 5%**
 
 -   Allen - Dupage (Dupage pays more)
 -   Kent - Dupage (Dupage pays more)
--   Dane Dupage (Dupage pays more)
+-   Dane - Dupage (Dupage pays more)
+-   Summit - Allen (Summit pays more)
+-   Summit - Kent (Summit pays more)
 
 ## Conclusion
 
@@ -253,3 +241,10 @@ there’s a difference on age. We could do that with ANOVA but that sounds
 painful… Maybe with some form of factor (early/mid/late career).
 
 We’ll also want to break it down by majors
+
+\#\#TODO
+
+-   compare mean earnings of GVSU graduates (emsi data) with Kent County
+    in general.
+-   major breakdown
+-   compare out of state GVSU with in state GVSU?
