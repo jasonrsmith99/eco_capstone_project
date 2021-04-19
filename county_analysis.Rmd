@@ -6,6 +6,7 @@ output: github_document
 
 ```{r, message=FALSE}
 library(tidyverse)
+library(rstatix)
 ```
 
 ```{r}
@@ -76,17 +77,13 @@ counties %>%
         axis.text.y = element_blank())
 ```
 
-ANOVA to see if there is a significant difference between the counties
-Normality condition technically violated but we can maybe rely on CLT? Could also remove outliers or focus on IQR. Or use KW test.
-There are also unequal variances, unsure if largest variance is more than 4 times the smallest. Regardless, Welch's Anova from Rstatix may be the way to go.
+We'll preform Welch's ANOVA to determine if there is a difference in wages between the counties. We use Welch's to control for hetroskedasticity. We'll assume normality comes from the Central Limits Theorem.
 ```{r}
-anova <- aov(incwage ~ county, weights = perwt, data = counties)
-summary(anova)
+welch_anova_test(counties, incwage ~ county)
 ```
-We conclude from the ANOVA that there is a significant difference in earnings between the counties. We can use Tukey to find out which differences specifically are different. (Could use Bonferroni to be more conservative)
+We conclude that there is a significant difference in earnings between the counties. We can use Games Howell to see which counties have a difference
 ```{r}
-TukeyHSD(anova)
-
+games_howell_test(counties, incwage~county) #output is group2 - group 1
 ```
 **The significant differences at 5%**
 
@@ -94,6 +91,7 @@ TukeyHSD(anova)
 - Kent - Dupage (Dupage pays more)
 - Summit - Dupage (Dupage pays more)
 - Dane - Dupage (Dupage pays more)
+- Summit - Allen (Summit pays more)
 - Dane - Allen (Dane pays more)
 - Dane - Kent (Dane pays more)
 - Dane - Summit (Dane pays more)
@@ -134,20 +132,21 @@ undergrad %>%
 Normality and variance assumptions likely violated. KW or Welch anova may be best. but I'll continue with ANOVA for now.
 
 ```{r}
-under_anova <- aov(incwage ~ county, weights = perwt, data = undergrad)
-summary(under_anova)
+welch_anova_test(undergrad, incwage ~ county)
 ```
 significant difference between counties tukey to do pair-wise
 
 ```{r}
-TukeyHSD(under_anova)
+games_howell_test(undergrad, incwage ~ county)
 ```
 
 **Significant differences at 5%**
 
 - Allen - Dupage (Dupage pays more)
 - Kent - Dupage (Dupage pays more)
-- Dane Dupage (Dupage pays more)
+- Dane - Dupage (Dupage pays more)
+- Summit - Allen (Summit pays more)
+- Summit - Kent (Summit pays more)
 
 ## Conclusion
 
@@ -158,3 +157,9 @@ It's also important to note that Dupage County has quite a few more respondents 
 We should also make age-earnings profiles for the counties to see if there's a difference on age. We could do that with ANOVA but that sounds painful... Maybe with some form of factor (early/mid/late career).
 
 We'll also want to break it down by majors
+
+##TODO
+
+- compare mean earnings of GVSU graduates (emsi data) with Kent County in general.
+- major breakdown
+- compare out of state GVSU with in state GVSU?
