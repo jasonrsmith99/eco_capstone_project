@@ -1,0 +1,25 @@
+\documentclass{article}
+\usepackage{caption}
+\begin{document}
+\begin{table}[ht]
+	\centering
+	\caption*{Table 6: Pairwise Comparision for County ANOVA}
+	\begin{tabular}{lrrrrl}
+		\hline
+		contrast & Estimate & SE & df & t.ratio & p.value \\ 
+		\hline
+		Dupage - Allen & 5520.4892 & 2218.5174 & 5262 & 2.488 & 0.1029 \\ 
+		Dupage - Kent & 7014.4152 & 1681.7019 & 5262 & 4.171 & 0.0003 \\ 
+		Dupage - Summit & 6039.0067 & 1840.1138 & 5262 & 3.282 & 0.0093 \\ 
+		Dupage - Dane & 3229.1443 & 1589.9738 & 5262 & 2.031 & 0.2857 \\ 
+		Allen - Kent & 1493.9261 & 2411.8041 & 5262 & 0.619 & 1.0000 \\ 
+		Allen - Summit & 518.5175 & 2524.8162 & 5262 & 0.205 & 1.0000 \\ 
+		Allen - Dane & -2291.3449 & 2348.7645 & 5262 & -0.976 & 1.0000 \\ 
+		Kent - Summit & -975.4085 & 2069.0575 & 5262 & -0.471 & 1.0000 \\ 
+		Kent - Dane & -3785.2709 & 1850.1342 & 5262 & -2.046 & 0.2857 \\ 
+		Summit - Dane & -2809.8624 & 1995.2178 & 5262 & -1.408 & 0.7955 \\ 
+		\hline
+		\multicolumn{6}{l}{{\footnotesize P value adjustment: holm method for 10 tests}}\\
+	\end{tabular}
+\end{table}
+\end{document}
